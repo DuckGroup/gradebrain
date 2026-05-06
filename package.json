@@ -19,15 +19,12 @@
   },
   "homepage": "https://github.com/DuckGroup/gradebrain#readme",
   "dependencies": {
-<<<<<<< HEAD
+
+    "dotenv": "^17.4.2",
     "openai": "^6.36.0",
     "pdf-parse": "^2.4.5"
-=======
-    "dotenv": "^17.4.2",
-    "openai": "^6.36.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0"
->>>>>>> main
   }
 }
