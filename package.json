@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/DuckGroup/gradebrain#readme",
   "dependencies": {
-    "openai": "^6.36.0"
+    "openai": "^6.36.0",
+    "pdf-parse": "^2.4.5"
   }
 }
