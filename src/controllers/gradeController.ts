@@ -22,7 +22,7 @@ class GradeController {
         return {
           success: false,
           error: "Invalid request body",
-          details: error.errors,
+          details: error.issues,
         };
       }
       if (error instanceof Error) {
