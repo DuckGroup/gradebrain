@@ -1,40 +1,28 @@
 import "dotenv/config";
-import OpenAI from "openai";
-import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod";
+import Fastify from "fastify";
+import fastifyMultipart from "@fastify/multipart";
+import { registerRoutes } from "./src/routes";
 
-const apiKey = process.env.OPENAI_API_KEY;
+const fastify = Fastify({ logger: true });
 
-const AI_output = z.object({
-  correct: z.boolean(),
-  grade: z.enum(["F", "E", "D", "C", "B", "A"]),
-});
+// Register multipart form data support
+fastify.register(fastifyMultipart);
 
-async function main(): Promise<void> {
-  const client = new OpenAI({
-    apiKey: apiKey,
-  });
+// Register all routes
+fastify.register(registerRoutes);
 
-  const response = await client.responses.create({
-    model: "gpt-4.1",
-    input: [
-      {
-        role: "system",
-        content: "The earth is flat because the moon is tiny",
-      },
-    ],
-    text: {
-      format: zodTextFormat(AI_output, "AI_output"),
-    },
-  });
-
-  console.log(response.output_text);
-}
-
-main().catch((error: unknown) => {
-  if (error instanceof Error) {
-    console.error(error.message);
-    return;
+const start = async (): Promise<void> => {
+  try {
+    await fastify.listen({ port: 3000, host: "0.0.0.0" });
+    console.log("Server started on http://0.0.0.0:3000");
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error("Unknown error");
+    }
+    process.exit(1);
   }
-  console.error("Unknown error");
-});
+};
+
+start();
