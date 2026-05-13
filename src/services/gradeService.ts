@@ -1,37 +1,39 @@
-import OpenAI from "openai";
-import { zodTextFormat } from "openai/helpers/zod";
 import { AIOutputSchema, GradeRequest } from "../schemas/gradeSchema";
+import githubModelsClient from "./githubModelsClient";
 
-const apiKey = process.env.OPENAI_API_KEY;
+const jsonInstruction =
+  'Return only valid JSON matching this schema: {"correct": boolean, "grade": "F" | "E" | "D" | "C" | "B" | "A" }';
 
-class GradeService {
-  private client: OpenAI;
+function extractJson(content: string): string {
+  const start = content.indexOf("{");
+  const end = content.lastIndexOf("}");
 
-  constructor() {
-    this.client = new OpenAI({
-      apiKey: apiKey,
-    });
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error("Model returned non-JSON or malformed JSON");
   }
 
+  return content.slice(start, end + 1);
+}
+
+class GradeService {
   async gradeContent(request: GradeRequest): Promise<string> {
-    const response = await this.client.responses.create({
-      model: "gpt-4.1",
-      input: [
+    const content = await githubModelsClient.chatCompletion(
+      [
         {
           role: "system",
-          content: request.systemPrompt,
+          content: `${request.systemPrompt}\n\n${jsonInstruction}`,
         },
         {
           role: "user",
           content: request.userContent,
         },
       ],
-      text: {
-        format: zodTextFormat(AIOutputSchema, "AI_output"),
-      },
-    });
+      0,
+    );
 
-    return response.output_text;
+    const parsed = AIOutputSchema.parse(JSON.parse(extractJson(content)));
+
+    return JSON.stringify(parsed);
   }
 }
 
