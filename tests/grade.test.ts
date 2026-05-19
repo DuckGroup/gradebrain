@@ -4,18 +4,34 @@ import githubModelsClient from "../src/services/githubModelsClient";
 jest.mock("../src/services/githubModelsClient", () => ({
   __esModule: true,
   default: {
-    chatCompletion: jest.fn(),
+    gradeCompletion: jest.fn(),
   },
 }));
 
 describe("POST /grade", () => {
   it("returns a grade result", async () => {
     const mockedClient = githubModelsClient as unknown as {
-      chatCompletion: jest.Mock;
+      gradeCompletion: jest.Mock;
     };
 
-    mockedClient.chatCompletion.mockResolvedValue(
+    mockedClient.gradeCompletion.mockResolvedValue(
       '{"correct":true,"grade":"A"}',
+    );
+
+    const boundary = "----gradebrain-test-boundary";
+    const multipartBody = Buffer.from(
+      [
+        `--${boundary}\r\n`,
+        'Content-Disposition: form-data; name="syllabus"; filename="syllabus.txt"\r\n',
+        "Content-Type: text/plain\r\n\r\n",
+        "Expected topics and rubric\r\n",
+        `--${boundary}\r\n`,
+        'Content-Disposition: form-data; name="exam"; filename="exam.txt"\r\n',
+        "Content-Type: text/plain\r\n\r\n",
+        "Student answer content\r\n",
+        `--${boundary}--\r\n`,
+      ].join(""),
+      "utf8",
     );
 
     const app = buildApp();
@@ -24,10 +40,10 @@ describe("POST /grade", () => {
     const response = await app.inject({
       method: "POST",
       url: "/grade",
-      payload: {
-        systemPrompt: "Use the syllabus to grade the answer.",
-        userContent: "Answer content.",
+      headers: {
+        "content-type": `multipart/form-data; boundary=${boundary}`,
       },
+      payload: multipartBody,
     });
 
     expect(response.statusCode).toBe(200);
