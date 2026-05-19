@@ -1,5 +1,4 @@
 import { FastifyInstance } from "fastify";
-import { GradeRequest } from "../schemas/gradeSchema";
 import healthController from "../controllers/healthController";
 import gradeController from "../controllers/gradeController";
 import pdfController from "../controllers/pdfController";
@@ -11,7 +10,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   // Grade content route
-  fastify.post<{ Body: GradeRequest }>("/grade", (request, reply) =>
+  fastify.post("/grade", (request, reply) =>
     gradeController.grade(request, reply),
   );
 

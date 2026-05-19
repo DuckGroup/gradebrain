@@ -1,16 +1,45 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
-import { GradeRequestSchema, GradeRequest } from "../schemas/gradeSchema";
+import { GradeInputSchema, GradeInput } from "../schemas/gradeSchema";
 import gradeService from "../services/gradeService";
 
 class GradeController {
   async grade(
-    request: FastifyRequest<{ Body: GradeRequest }>,
+    request: FastifyRequest,
     reply: FastifyReply,
   ): Promise<object> {
     try {
-      const body = GradeRequestSchema.parse(request.body);
-      const result = await gradeService.gradeContent(body);
+      const parts = await request.files();
+      let syllabusBuffer: Buffer | null = null;
+      let examBuffer: Buffer | null = null;
+
+      for await (const part of parts) {
+        if (part.type !== "file") {
+          continue;
+        }
+        if (part.fieldname === "syllabus") {
+          syllabusBuffer = await part.toBuffer();
+          continue;
+        }
+        if (part.fieldname === "exam") {
+          examBuffer = await part.toBuffer();
+        }
+      }
+
+      if (!syllabusBuffer || !examBuffer) {
+        reply.code(400);
+        return {
+          success: false,
+          error: "Missing syllabus or exam file",
+        };
+      }
+
+      const input: GradeInput = GradeInputSchema.parse({
+        syllabus: syllabusBuffer.toString("utf8"),
+        exam: examBuffer.toString("utf8"),
+      });
+
+      const result = await gradeService.gradeContent(input);
 
       return {
         success: true,
