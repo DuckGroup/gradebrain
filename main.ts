@@ -1,15 +1,7 @@
 import "dotenv/config";
-import Fastify from "fastify";
-import fastifyMultipart from "@fastify/multipart";
-import { registerRoutes } from "./src/routes";
+import buildApp from "./src/app";
 
-const fastify = Fastify({ logger: true });
-
-// Register multipart form data support
-fastify.register(fastifyMultipart);
-
-// Register all routes
-fastify.register(registerRoutes);
+const fastify = buildApp({ logger: true });
 
 const start = async (): Promise<void> => {
   try {
