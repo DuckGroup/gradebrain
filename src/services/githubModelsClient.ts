@@ -2,6 +2,12 @@ import { getGitHubModelsConfig } from "../config/githubModels";
 import type { ChatMessage } from "../types/githubModels";
 import type { GitHubModelsResponse } from "../types/githubModels";
 
+const gradeSystemPrompt = [
+  "You are a strict grader.",
+  "Use the provided syllabus to evaluate the exam response.",
+  "Return only valid JSON matching this schema: {\"correct\": boolean, \"grade\": \"F\" | \"E\" | \"D\" | \"C\" | \"B\" | \"A\" }",
+].join("\n");
+
 class GitHubModelsClient {
   async chatCompletion(messages: ChatMessage[], temperature = 0): Promise<string> {
     const config = getGitHubModelsConfig();
@@ -32,6 +38,22 @@ class GitHubModelsClient {
     }
 
     return content;
+  }
+
+  async gradeCompletion(userContent: string, temperature = 0): Promise<string> {
+    return this.chatCompletion(
+      [
+        {
+          role: "system",
+          content: gradeSystemPrompt,
+        },
+        {
+          role: "user",
+          content: userContent,
+        },
+      ],
+      temperature,
+    );
   }
 }
 

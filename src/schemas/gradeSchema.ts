@@ -5,10 +5,10 @@ export const AIOutputSchema = z.object({
   grade: z.enum(["F", "E", "D", "C", "B", "A"]),
 });
 
-export const GradeRequestSchema = z.object({
-  systemPrompt: z.string().min(1, "System prompt cannot be empty"),
-  userContent: z.string().min(1, "User content cannot be empty"),
+export const GradeInputSchema = z.object({
+  syllabus: z.string().min(1, "Syllabus content cannot be empty"),
+  exam: z.string().min(1, "Exam content cannot be empty"),
 });
 
 export type AIOutput = z.infer<typeof AIOutputSchema>;
-export type GradeRequest = z.infer<typeof GradeRequestSchema>;
+export type GradeInput = z.infer<typeof GradeInputSchema>;
