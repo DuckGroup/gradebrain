@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import healthController from "../controllers/healthController";
 import gradeController from "../controllers/gradeController";
+import repoGradeController from "../controllers/repoGradeController";
 import pdfController from "../controllers/pdfController";
 
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
@@ -12,6 +13,10 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   // Grade content route
   fastify.post("/grade", (request, reply) =>
     gradeController.grade(request, reply),
+  );
+
+  fastify.post("/grade-repo", (request, reply) =>
+    repoGradeController.gradeRepo(request, reply),
   );
 
   // Parse PDF route
