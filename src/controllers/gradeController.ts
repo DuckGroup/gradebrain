@@ -4,17 +4,19 @@ import { GradeInputSchema, GradeInput } from "../schemas/gradeSchema";
 import gradeService from "../services/gradeService";
 
 class GradeController {
-  async grade(
-    request: FastifyRequest,
-    reply: FastifyReply,
-  ): Promise<object> {
+  async grade(request: FastifyRequest, reply: FastifyReply): Promise<object> {
     try {
-      const parts = await request.files();
+      const parts = request.parts();
       let syllabusBuffer: Buffer | null = null;
-      let examBuffer: Buffer | null = null;
+      let submissionBuffer: Buffer | null = null;
+      let prompt: string | undefined;
 
       for await (const part of parts) {
         if (part.type !== "file") {
+          if (part.fieldname === "prompt") {
+            const trimmedPrompt = part.value.trim();
+            prompt = trimmedPrompt.length > 0 ? trimmedPrompt : undefined;
+          }
           continue;
         }
         if (part.fieldname === "syllabus") {
@@ -22,11 +24,11 @@ class GradeController {
           continue;
         }
         if (part.fieldname === "exam") {
-          examBuffer = await part.toBuffer();
+          submissionBuffer = await part.toBuffer();
         }
       }
 
-      if (!syllabusBuffer || !examBuffer) {
+      if (!syllabusBuffer || !submissionBuffer) {
         reply.code(400);
         return {
           success: false,
@@ -36,7 +38,8 @@ class GradeController {
 
       const input: GradeInput = GradeInputSchema.parse({
         syllabus: syllabusBuffer.toString("utf8"),
-        exam: examBuffer.toString("utf8"),
+        submission: submissionBuffer.toString("utf8"),
+        prompt,
       });
 
       const result = await gradeService.gradeContent(input);

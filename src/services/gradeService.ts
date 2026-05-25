@@ -18,11 +18,15 @@ class GradeService {
       "Syllabus:",
       request.syllabus,
       "",
-      "Exam:",
-      request.exam,
+      "Submission:",
+      request.submission,
     ].join("\n");
 
-    const content = await githubModelsClient.gradeCompletion(userContent, 0);
+    const content = await githubModelsClient.gradeCompletion(
+      userContent,
+      0,
+      request.prompt,
+    );
 
     const parsed = AIOutputSchema.parse(JSON.parse(extractJson(content)));
 

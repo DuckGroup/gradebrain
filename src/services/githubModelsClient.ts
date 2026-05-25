@@ -5,11 +5,15 @@ import type { GitHubModelsResponse } from "../types/githubModels";
 const gradeSystemPrompt = [
   "You are a strict grader.",
   "Use the provided syllabus to evaluate the exam response.",
-  "Return only valid JSON matching this schema: {\"correct\": boolean, \"grade\": \"F\" | \"E\" | \"D\" | \"C\" | \"B\" | \"A\" }",
+  'Return only valid JSON matching this schema: {"correct": boolean, "grade": "F" | "E" | "D" | "C" | "B" | "A", "comment": string }',
+  "The comment must briefly explain why the grade was given and what was missing or weak in the submission.",
 ].join("\n");
 
 class GitHubModelsClient {
-  async chatCompletion(messages: ChatMessage[], temperature = 0): Promise<string> {
+  async chatCompletion(
+    messages: ChatMessage[],
+    temperature = 0,
+  ): Promise<string> {
     const config = getGitHubModelsConfig();
 
     const response = await fetch(config.endpoint, {
@@ -27,7 +31,9 @@ class GitHubModelsClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`GitHub Models API error (${response.status}): ${errorText}`);
+      throw new Error(
+        `GitHub Models API error (${response.status}): ${errorText}`,
+      );
     }
 
     const data = (await response.json()) as GitHubModelsResponse;
@@ -40,12 +46,24 @@ class GitHubModelsClient {
     return content;
   }
 
-  async gradeCompletion(userContent: string, temperature = 0): Promise<string> {
+  async gradeCompletion(
+    userContent: string,
+    temperature = 0,
+    extraInstructions?: string,
+  ): Promise<string> {
+    const systemContent = extraInstructions?.trim()
+      ? [
+          gradeSystemPrompt,
+          "Additional instructions:",
+          extraInstructions.trim(),
+        ].join("\n\n")
+      : gradeSystemPrompt;
+
     return this.chatCompletion(
       [
         {
           role: "system",
-          content: gradeSystemPrompt,
+          content: systemContent,
         },
         {
           role: "user",
