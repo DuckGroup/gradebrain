@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const AIOutputSchema = z.object({
   correct: z.boolean(),
-  grade: z.enum(["F", "E", "D", "C", "B", "A"]),
+  grade: z.enum(["IG", "G", "VG"]),
   comment: z.string().min(1, "Comment cannot be empty"),
 });
 
