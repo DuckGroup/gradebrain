@@ -3,6 +3,7 @@ import healthController from "../controllers/healthController";
 import gradeController from "../controllers/gradeController";
 import repoGradeController from "../controllers/repoGradeController";
 import pdfController from "../controllers/pdfController";
+import studentGradeController from "../controllers/studentGradeController";
 
 export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
   // Health check route
@@ -17,6 +18,11 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.post("/grade-repo", (request, reply) =>
     repoGradeController.gradeRepo(request, reply),
+  );
+
+  // Grade a student by referencing files in submissions or by raw content
+  fastify.post("/grade-student", (request, reply) =>
+    studentGradeController.gradeStudent(request, reply),
   );
 
   // Parse PDF route
