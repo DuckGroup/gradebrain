@@ -29,7 +29,7 @@ describe("POST /grade-repo", () => {
       "Repository content",
     );
     mockedClient.gradeCompletion.mockResolvedValue(
-      '{"correct":true,"grade":"A","comment":"The repository demonstrates a strong structure and good API separation, but it is missing tests and clearer input validation in several handlers."}',
+      '{"correct":true,"points":18,"comment":"The repository demonstrates a strong structure and good API separation, but it is missing tests and clearer input validation in several handlers."}',
     );
 
     const boundary = "----gradebrain-repo-test-boundary";
@@ -67,7 +67,7 @@ describe("POST /grade-repo", () => {
     const body = response.json();
     expect(body.success).toBe(true);
     expect(body.result).toBe(
-      '{"correct":true,"grade":"A","comment":"The repository demonstrates a strong structure and good API separation, but it is missing tests and clearer input validation in several handlers."}',
+      '{"correct":true,"points":18,"comment":"The repository demonstrates a strong structure and good API separation, but it is missing tests and clearer input validation in several handlers."}',
     );
     expect(mockedRepositoryService.readRepository).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -90,7 +90,7 @@ describe("POST /grade-repo", () => {
       "Repository content",
     );
     mockedClient.gradeCompletion.mockResolvedValue(
-      '{"correct":true,"grade":"A","comment":"The repository demonstrates a strong structure and good API separation, but it is missing tests and clearer input validation in several handlers."}',
+      '{"correct":true,"points":18,"comment":"The repository demonstrates a strong structure and good API separation, but it is missing tests and clearer input validation in several handlers."}',
     );
 
     const boundary = "----gradebrain-repo-zip-test-boundary";
@@ -126,7 +126,7 @@ describe("POST /grade-repo", () => {
     const body = response.json();
     expect(body.success).toBe(true);
     expect(body.result).toBe(
-      '{"correct":true,"grade":"A","comment":"The repository demonstrates a strong structure and good API separation, but it is missing tests and clearer input validation in several handlers."}',
+      '{"correct":true,"points":18,"comment":"The repository demonstrates a strong structure and good API separation, but it is missing tests and clearer input validation in several handlers."}',
     );
     expect(mockedRepositoryService.readRepository).toHaveBeenCalledWith(
       expect.objectContaining({

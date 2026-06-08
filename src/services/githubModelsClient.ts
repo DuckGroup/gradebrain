@@ -5,8 +5,8 @@ import type { GitHubModelsResponse } from "../types/githubModels";
 const gradeSystemPrompt = [
   "You are a strict grader.",
   "Use the provided syllabus to evaluate the exam response.",
-  'Return only valid JSON matching this schema: {"correct": boolean, "grade": "IG" | "G" | "VG", "comment": string }',
-  "The comment must briefly explain why the grade was given and what was missing or weak in the submission.",
+  'Return only valid JSON matching this schema: {"correct": boolean, "points": number, "comment": string }',
+  "The comment must briefly explain why the points were given and what was missing or weak in the submission.",
 ].join("\n");
 
 class GitHubModelsClient {

@@ -15,7 +15,7 @@ describe("POST /grade", () => {
     };
 
     mockedClient.gradeCompletion.mockResolvedValue(
-      '{"correct":true,"grade":"A","comment":"The submission covers the required topics and matches the syllabus well. It was missing a deeper explanation of security tradeoffs and some implementation details."}',
+      '{"correct":true,"points":17,"comment":"The submission covers the required topics and matches the syllabus well. It was missing a deeper explanation of security tradeoffs and some implementation details."}',
     );
 
     const boundary = "----gradebrain-test-boundary";
@@ -51,7 +51,7 @@ describe("POST /grade", () => {
     const body = response.json();
     expect(body.success).toBe(true);
     expect(body.result).toBe(
-      '{"correct":true,"grade":"A","comment":"The submission covers the required topics and matches the syllabus well. It was missing a deeper explanation of security tradeoffs and some implementation details."}',
+      '{"correct":true,"points":17,"comment":"The submission covers the required topics and matches the syllabus well. It was missing a deeper explanation of security tradeoffs and some implementation details."}',
     );
 
     await app.close();

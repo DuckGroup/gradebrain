@@ -3,6 +3,7 @@ import { z } from "zod";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import gradeService from "../services/gradeService";
+import pdfService from "../services/pdfService";
 import { GradeInputSchema, GradeInput } from "../schemas/gradeSchema";
 import { truncateTexts } from "../utils/textTruncation";
 
@@ -12,6 +13,7 @@ const BodySchema = z.object({
   studentFile: z.string().optional(),
   syllabusFile: z.string().optional(),
   studentContent: z.string().optional(),
+  studentAnswers: z.string().optional(),
   syllabusContent: z.string().optional(),
   prompt: z.string().optional(),
 });
@@ -26,17 +28,27 @@ class StudentGradeController {
 
       let syllabusText: string | undefined = body.syllabusContent;
       let submissionText: string | undefined = body.studentContent;
+      const studentAnswers = body.studentAnswers?.trim();
 
       if (body.syllabusFile && !syllabusText) {
         const syllabusPath = path.join(SUBMISSIONS_ROOT, body.syllabusFile);
         const buf = await readFile(syllabusPath);
-        syllabusText = buf.toString("utf8");
+       syllabusText = await pdfService.parsePDF(buf);
       }
 
-      if (body.studentFile && !submissionText) {
+      if (body.studentFile) {
         const studentPath = path.join(SUBMISSIONS_ROOT, body.studentFile);
         const buf = await readFile(studentPath);
-        submissionText = buf.toString("utf8");
+       const parsedStudentText = await pdfService.parsePDF(buf);
+       submissionText = submissionText
+         ? `${submissionText}\n\n[EXTRACTED FROM STUDENT FILE]\n${parsedStudentText}`
+         : parsedStudentText;
+      }
+
+      if (studentAnswers) {
+       submissionText = submissionText
+         ? `${submissionText}\n\n[USER-PROVIDED STUDENT ANSWERS]\n${studentAnswers}`
+         : studentAnswers;
       }
 
       if (!syllabusText || !submissionText) {
@@ -51,20 +63,20 @@ class StudentGradeController {
 
       // Build prompt: include user's prompt and automatic instructions
       const userPrompt = body.prompt?.trim() ?? "";
-      const deviationInstruction = `Important: Do NOT use any scores, marks or annotations already written on the paper when computing the grade. Grade independently based only on the provided syllabus and the student's answers.
+      const deviationInstruction = `Important: Do NOT use any scores, marks or annotations already written on the paper when computing the points. Grade independently based only on the provided syllabus and the student's answers.
 
 CRITICAL: Identify and analyze EACH question/task in the submission:
 1. For each question/task, briefly note what it's asking (e.g., "Question 1: What is a relational database?")
-2. Grade that answer based on the syllabus criteria
+2. Assign points to that answer based on the syllabus criteria
 3. If the paper has a mark for that question (e.g., "✓" or "✗" or points), compare your assessment to that mark
 4. If you disagree, clearly explain WHY in a "Deviations" subsection
 
 Your final 'comment' should contain:
-- Overall reasoning for your grade
+- Overall reasoning for your points
 - A "Per-Task Analysis" section listing key questions and whether marks align with course requirements
 - A "Deviations" subsection explaining where you differ from paper marks and why
 
-Return ONLY valid JSON matching the expected schema: {"correct": boolean, "grade": "IG" | "G" | "VG", "comment": string}`;
+Return ONLY valid JSON matching the expected schema: {"correct": boolean, "points": number, "comment": string}`;
 
       const combinedPrompt = [userPrompt, deviationInstruction].filter(Boolean).join("\n\n");
 

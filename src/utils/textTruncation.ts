@@ -5,6 +5,7 @@
 
 const MAX_SUBMISSION_CHARS = 6000; // Safe margin: ~6000 chars ≈ 1500 tokens
 const MAX_SYLLABUS_CHARS = 3000;   // Syllabus usually doesn't need to be full
+const PAGE_MARKER_REGEX = /\[PAGE (\d+)\]\n/g;
 
 interface TruncationResult {
   submission: string;
@@ -14,12 +15,13 @@ interface TruncationResult {
 }
 
 /**
- * Extract first occurrence of markers like "18/20", "IG", "G", "VG" with context
+ * Extract first occurrence of markers like "18/20", "points", or letter grades with context
  */
 function extractMarkerContext(text: string): string {
   const markerPatterns = [
     /\b\d{1,2}\s*\/\s*20\b/,    // "18/20" or "18 / 20"
-    /\b(IG|G|VG)\b/,             // Grading letters
+    /\b(points?|poäng)\b/i,      // Points markers
+    /\b(IG|G|VG)\b/,             // Legacy grading letters
     /Points?:\s*[\dA-Z\/]+/i,     // "Points: 18/20"
   ];
 
@@ -36,12 +38,53 @@ function extractMarkerContext(text: string): string {
   return "";
 }
 
+function truncateMarkedPages(text: string, maxChars: number): string {
+  const matches = [...text.matchAll(PAGE_MARKER_REGEX)];
+  if (matches.length === 0) {
+    return "";
+  }
+
+  const pageSections = matches.map((match, index) => {
+    const start = (match.index ?? 0) + match[0].length;
+    const end = matches[index + 1]?.index ?? text.length;
+    return {
+      marker: match[0].trim(),
+      content: text.slice(start, end).trim(),
+    };
+  });
+
+  const perPageBudget = Math.max(
+    400,
+    Math.floor((maxChars - pageSections.length * 20) / pageSections.length),
+  );
+
+  const result = pageSections
+    .map((section) => {
+      const pageText =
+        section.content.length > perPageBudget
+          ? `${section.content.slice(0, perPageBudget)}\n[...PAGE TRUNCATED...]`
+          : section.content;
+
+      return `${section.marker}\n${pageText}`;
+    })
+    .join("\n\n");
+
+  return result.length > maxChars
+    ? `${result.slice(0, maxChars)}\n[...SUBMISSION TRUNCATED FOR LENGTH...]`
+    : result;
+}
+
 /**
  * Intelligently truncate submission text while preserving structure
  */
 function truncateSubmission(text: string): string {
   if (text.length <= MAX_SUBMISSION_CHARS) {
     return text;
+  }
+
+  const pagedText = truncateMarkedPages(text, MAX_SUBMISSION_CHARS);
+  if (pagedText) {
+    return pagedText;
   }
 
   // Strategy: Find the actual exam questions and answers (skipping instructions/headers)
@@ -104,6 +147,11 @@ function truncateSubmission(text: string): string {
 function truncateSyllabus(text: string): string {
   if (text.length <= MAX_SYLLABUS_CHARS) {
     return text;
+  }
+
+  const pagedText = truncateMarkedPages(text, MAX_SYLLABUS_CHARS);
+  if (pagedText) {
+    return pagedText;
   }
 
   // Look for key sections: KURSMÅL, BEDÖMNING, INNEHÅL, etc.
